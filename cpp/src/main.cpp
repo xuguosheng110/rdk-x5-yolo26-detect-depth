@@ -2191,6 +2191,13 @@ int main(int argc, char** argv) {
     o << "},";
     o << "\"cpu\":{\"util_pct\":" << std::setprecision(1)
       << system_snapshot.cpu_util_pct << "},";
+    o << "\"thermal\":{\"cpu_c\":";
+    if (system_snapshot.cpu_temp_c) o << *system_snapshot.cpu_temp_c;
+    else o << "null";
+    o << ",\"ddr_c\":";
+    if (system_snapshot.ddr_temp_c) o << *system_snapshot.ddr_temp_c;
+    else o << "null";
+    o << ",\"bpu_c\":null},";
     o << "\"memory\":{\"util_pct\":" << std::setprecision(1)
       << system_snapshot.memory_util_pct << "},";
     o << "\"display\":{\"hdmi\":" << (args.hdmi ? (hdmi_ready.load() ? 1 : 0) : -1)

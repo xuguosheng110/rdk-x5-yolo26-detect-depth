@@ -45,7 +45,7 @@
     .performance,.inference,.community { min-width:0;min-height:0; }
     .performance {
       display:grid;
-      grid-template-rows:auto minmax(98px,.75fr) minmax(164px,1.2fr) minmax(74px,.55fr) minmax(94px,.68fr) auto;
+      grid-template-rows:auto minmax(98px,.75fr) minmax(240px,1.2fr) minmax(74px,.55fr) minmax(94px,.68fr) auto;
       gap:clamp(8px,.65vw,12px);
       overflow:hidden;
     }
@@ -117,6 +117,8 @@
     .resourceFill { width:0;height:100%;border-radius:inherit;background:linear-gradient(90deg,var(--brand),var(--brand-5));transition:width .35s ease; }
     .resourceRow[data-resource="cpu"] .resourceFill { background:linear-gradient(90deg,var(--brand-2),var(--brand-4)); }
     .resourceRow[data-resource="memory"] .resourceFill { background:linear-gradient(90deg,var(--brand-3),var(--brand-6)); }
+    .temperatureRow { display:flex;flex-wrap:wrap;justify-content:space-between;gap:4px 12px;color:var(--muted);font-size:13px;font-variant-numeric:tabular-nums; }
+    .temperatureRow strong { color:var(--text); }
 
     .opsGrid { display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:clamp(8px,.65vw,11px); }
     .opsMetric { display:grid;grid-template-rows:auto auto;align-items:start;gap:6px;padding:clamp(10px,.8vw,14px);min-width:0; }
@@ -171,7 +173,7 @@
     @media (max-width:1450px) {
       :root { --qr-size:clamp(108px,10vw,142px); }
       .dashboard { grid-template-columns:minmax(270px,22fr) minmax(360px,44fr) minmax(200px,16fr); }
-      .performance { grid-template-rows:auto minmax(90px,.72fr) minmax(146px,1.14fr) minmax(68px,.5fr) minmax(84px,.62fr) auto; }
+      .performance { grid-template-rows:auto minmax(90px,.72fr) minmax(240px,1.14fr) minmax(68px,.5fr) minmax(84px,.62fr) auto; }
     }
     #stream {width:100%;height:100%;object-fit:contain;display:block;}
     .inference {grid-template-rows:auto minmax(0,1fr);gap:12px;}
@@ -214,6 +216,7 @@
         <div class="resourceRow" data-resource="bpu"><span class="metricLabel">BPU</span><strong id="bpuUsage">—</strong><div class="resourceBar" role="progressbar" aria-label="BPU utilization" aria-valuemin="0" aria-valuemax="100"><div class="resourceFill" id="bpuBar"></div></div></div>
         <div class="resourceRow" data-resource="cpu"><span class="metricLabel">CPU</span><strong id="cpuUsage">—</strong><div class="resourceBar" role="progressbar" aria-label="CPU utilization" aria-valuemin="0" aria-valuemax="100"><div class="resourceFill" id="cpuBar"></div></div></div>
         <div class="resourceRow" data-resource="memory"><span class="metricLabel">MEMORY</span><strong id="memoryUsage">—</strong><div class="resourceBar" role="progressbar" aria-label="Memory utilization" aria-valuemin="0" aria-valuemax="100"><div class="resourceFill" id="memoryBar"></div></div></div>
+        <div class="temperatureRow" title="CPU and DDR temperatures (°C); independent BPU temperature is unavailable."><span>CPU <strong id="cpuTemperature">—</strong></span><span>DDR <strong id="ddrTemperature">—</strong></span></div>
       </section>
 
       <section class="opsGrid">
@@ -266,6 +269,7 @@
       const numeric = number(value);
       return numeric === null ? '—' : `${numeric.toFixed(1)} ms`;
     };
+    const formatTemperature = value => number(value) === null ? '—' : `${Number(value).toFixed(1)}°C`;
 
     let consecutiveFailures = 0, previousStats=null, encodeRate=0;
     let streamRetryTimer;
@@ -315,6 +319,8 @@
       setUtilization('bpu', bpu.util_pct);
       setUtilization('cpu', cpu.util_pct ?? system.cpu_pct);
       setUtilization('memory', memory.util_pct ?? system.memory_pct);
+      byId('cpuTemperature').textContent = formatTemperature(stats.thermal?.cpu_c);
+      byId('ddrTemperature').textContent = formatTemperature(stats.thermal?.ddr_c);
     }
 
     async function pollStats() {
@@ -328,7 +334,11 @@
         setOnline(true);
       } catch (error) {
         consecutiveFailures += 1;
-        if (consecutiveFailures >= 3) setOnline(false);
+        if (consecutiveFailures >= 3) {
+          setOnline(false);
+          byId('cpuTemperature').textContent = '—';
+          byId('ddrTemperature').textContent = '—';
+        }
       } finally {
         clearTimeout(timer);
       }
@@ -390,8 +400,9 @@
               context.drawImage(bitmap,0,paneH+4,bitmap.width,paneH,240,y,240,h);
               context.fillStyle='#eeeeee';context.font='13px sans-serif';
               context.fillText('BPU '+byId('bpuUsage').textContent+'   CPU '+byId('cpuUsage').textContent,12,285);
-              context.fillStyle='#9faab5';context.font='12px sans-serif';
-              context.fillText('SPI display | Near: warm  Far: cold | Not meters',12,309);
+              context.fillText('TEMP  CPU '+byId('cpuTemperature').textContent+'   DDR '+byId('ddrTemperature').textContent,12,301);
+              context.fillStyle='#9faab5';context.font='10px sans-serif';
+              context.fillText('SPI display | Near: warm  Far: cold | Not meters',12,316);
             } else {
               if(stream.width!==bitmap.width||stream.height!==bitmap.height){stream.width=bitmap.width;stream.height=bitmap.height;}
               context.drawImage(bitmap,0,0);

@@ -141,6 +141,34 @@ void TestOverlappingSamplesSerializeReaderAccess() {
   CHECK(max_active_readers.load() == 1);
 }
 
+void TestTemperaturesUseSensorTypesAndClearFailedReads() {
+  std::optional<std::string> cpu = "74702\n", ddr = "75679\n";
+  system_metrics::Sampler sampler(
+      [&](const std::string& path) -> std::optional<std::string> {
+        // Deliberately reverse the deployed board's zone numbering.
+        if (path == "/zone0/type") return "thermal-cpu\n";
+        if (path == "/zone9/type") return "thermal-ddr\n";
+        if (path == "/zone0/temp") return cpu;
+        if (path == "/zone9/temp") return ddr;
+        return std::nullopt;
+      }, {"/zone0", "/zone9"});
+  auto sample = sampler.Sample();
+  CHECK(sample.cpu_temp_c && sample.ddr_temp_c);
+  CheckNear(*sample.cpu_temp_c, 74.702);
+  CheckNear(*sample.ddr_temp_c, 75.679);
+  cpu.reset();
+  ddr = "invalid\n";
+  sample = sampler.Sample();
+  CHECK(!sample.cpu_temp_c && !sample.ddr_temp_c);
+  for (const auto& invalid : {"nan", "inf", "75000 garbage", "999999"}) {
+    cpu = invalid;
+    CHECK(!sampler.Sample().cpu_temp_c);
+  }
+  cpu = "0\n";
+  CHECK(sampler.Sample().cpu_temp_c.has_value());
+  CheckNear(*sampler.Sample().cpu_temp_c, 0.0);
+}
+
 template <typename Test>
 void Run(const char* name, Test test, int* failures) {
   try {
@@ -170,6 +198,8 @@ int main() {
       TestSamplerComputesDeltaAndClampsMemory, &failures);
   Run("overlapping samples serialize reader access",
       TestOverlappingSamplesSerializeReaderAccess, &failures);
+  Run("temperatures use sensor types and clear failed reads",
+      TestTemperaturesUseSensorTypesAndClearFailedReads, &failures);
   if (failures != 0) {
     std::cerr << failures << " test(s) failed\n";
     return 1;

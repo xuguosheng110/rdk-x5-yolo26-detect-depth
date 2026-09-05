@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <cmath>
 #include <fstream>
+#include <filesystem>
 #include <limits>
 #include <sstream>
 #include <utility>
@@ -37,6 +38,31 @@ std::optional<std::string> ReadFile(const std::string& path) {
   contents << input.rdbuf();
   if (input.bad()) return std::nullopt;
   return contents.str();
+}
+
+std::vector<std::string> ThermalZones() {
+  std::vector<std::string> paths;
+  std::error_code error;
+  std::filesystem::directory_iterator it("/sys/class/thermal", error), end;
+  while (!error && it != end) {
+    if (it->path().filename().string().rfind("thermal_zone", 0) == 0)
+      paths.push_back(it->path().string());
+    it.increment(error);
+  }
+  return paths;
+}
+
+std::optional<double> ReadTemperature(const Sampler::Reader& reader,
+                                      const std::string& zone) {
+  const auto text = reader(zone + "/temp");
+  if (!text) return std::nullopt;
+  std::istringstream input(*text);
+  double millidegrees;
+  std::string extra;
+  if (!(input >> millidegrees) || (input >> extra) ||
+      !std::isfinite(millidegrees) || millidegrees < -40000 ||
+      millidegrees > 150000) return std::nullopt;
+  return millidegrees / 1000.0;
 }
 
 }  // namespace
@@ -117,14 +143,29 @@ std::optional<double> ParseMeminfoUtilizationPercent(const std::string& text) {
   return ClampPercent(used_fraction * 100.0);
 }
 
-Sampler::Sampler() : Sampler(ReadFile) {}
+Sampler::Sampler() : Sampler(ReadFile, ThermalZones()) {}
 
-Sampler::Sampler(Reader reader) : reader_(std::move(reader)) {}
+Sampler::Sampler(Reader reader, std::vector<std::string> thermal_zones)
+    : reader_(std::move(reader)), thermal_zones_(std::move(thermal_zones)) {}
 
 Metrics Sampler::Sample() {
   std::lock_guard<std::mutex> lock(mutex_);
 
+  // Missing/failed sensor reads must not keep a stale temperature on screen.
+  last_.cpu_temp_c.reset();
+  last_.ddr_temp_c.reset();
+
   if (reader_) {
+    for (const auto& zone : thermal_zones_) {
+      const auto type_text = reader_(zone + "/type");
+      if (!type_text) continue;
+      std::istringstream input(*type_text);
+      std::string type;
+      input >> type;
+      // X5 exposes CPU and DDR sensors; DDR is not a BPU temperature.
+      if (type == "thermal-cpu") last_.cpu_temp_c = ReadTemperature(reader_, zone);
+      else if (type == "thermal-ddr") last_.ddr_temp_c = ReadTemperature(reader_, zone);
+    }
     const auto stat_text = reader_("/proc/stat");
     if (stat_text.has_value()) {
       const auto current = ParseProcStat(*stat_text);
