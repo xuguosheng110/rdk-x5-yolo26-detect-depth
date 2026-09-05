@@ -4,6 +4,10 @@
 
 本项目移植自 [Max.Ma 的 RDK S100P 双模型演示](https://github.com/maxma615/yolo26-detect-depth-demo)，参考[地瓜机器人论坛案例](https://forum.d-robotics.cc/t/topic/35680)，模型与解码采用 [D-Robotics 官方 X5 Model Zoo](https://github.com/D-Robotics/rdk_model_zoo/tree/rdk_x5)。**仓库根目录是 X5 实现；[references/s100p](references/s100p) 是带原许可证的 S100P 原始源码快照。**
 
+## 学习入口
+
+先看 [整体代码架构图](docs/architecture.md)，再按 [学习与使用路线](docs/learning-guide.md) 阅读源码。指南包含代码入口、单帧处理、线程交接、开机全屏流程、常见参数、修改位置和排查方法。
+
 ## 功能与验证结果
 
 - YOLO26s 检测 + YOLO26s 深度为默认组合；可切换 nano（N/N）、balanced（S/N）。
@@ -78,7 +82,8 @@ reports/              去除设备标识与原始场景信息后的验证摘要
 
 - [参考方案索引与固定版本](references/README.md)
 - [X5 / S100P 移植差异](docs/x5-vs-s100p.md)
-- [数据流与帧率定义](docs/architecture.md)
+- [整体代码架构、线程数据流与启动图](docs/architecture.md)
+- [学习路线、使用方法与修改位置](docs/learning-guide.md)
 - [SPI 屏前置条件](docs/spi-display.md)
 - [展会部署、维护与恢复](docs/exhibition.md)
 - [验证与复测](docs/validation.md)
