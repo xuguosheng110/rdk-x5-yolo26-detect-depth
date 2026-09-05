@@ -1,0 +1,15 @@
+{
+  "target": "RDK X5 / ARM64",
+  "release_cpp_build": "passed",
+  "ctest": {
+    "passed": 3,
+    "failed": 0
+  },
+  "python_syntax": "passed",
+  "shell_syntax": "passed",
+  "documentation_local_links": "passed",
+  "s100p_snapshot_hashes": "passed",
+  "qr_decode": "passed",
+  "x5_core_matches_deployed_source": true,
+  "main_cpp_sha256": "4fd40e97e553291c6318b4d210693b94e45e35a177dcbe90b3dfade2e99be73f"
+}

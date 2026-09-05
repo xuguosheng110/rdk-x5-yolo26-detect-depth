@@ -1,0 +1,20 @@
+{
+  "boot_verified": true,
+  "display": {
+    "width": 480,
+    "height": 320,
+    "fullscreen": true,
+    "screensaver_timeout": 0,
+    "dpms_enabled": false
+  },
+  "recovery": {
+    "browser_recovery": {
+      "observed_seconds": 16.2,
+      "restart_count_increased": true
+    },
+    "inference_recovery": {
+      "observed_seconds": 10.4,
+      "restart_count_increased": true
+    }
+  }
+}

@@ -1,0 +1,11 @@
+__pycache__/
+*.pyc
+/models/
+/cpp/build/
+/output/
+/assets/bus.jpg
+/reports/verify_quality/
+*.part
+*.xwd
+.env
+.env.*

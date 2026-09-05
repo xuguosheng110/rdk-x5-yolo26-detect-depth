@@ -1,0 +1,6 @@
+[Desktop Entry]
+Type=Application
+Name=RDK X5 Detect and Depth
+Exec=/app/rdk-x5-vision/scripts/spi_display.sh
+Terminal=false
+X-GNOME-Autostart-enabled=true

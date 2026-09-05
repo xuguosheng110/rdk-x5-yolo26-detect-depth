@@ -1,0 +1,8 @@
+{
+  "default_preset": "quality",
+  "presets": {
+    "nano": {"detect": "yolo26n_detect_bayese_640x640_nv12.bin", "depth": "yolo26n_depth_bayese_768x768_nv12.bin"},
+    "balanced": {"detect": "yolo26s_detect_bayese_640x640_nv12.bin", "depth": "yolo26n_depth_bayese_768x768_nv12.bin"},
+    "quality": {"detect": "yolo26s_detect_bayese_640x640_nv12.bin", "depth": "yolo26s_depth_bayese_768x768_nv12.bin"}
+  }
+}

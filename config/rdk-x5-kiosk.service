@@ -1,0 +1,14 @@
+[Unit]
+Description=RDK X5 exhibition fullscreen SPI browser
+StartLimitIntervalSec=0
+
+[Service]
+Type=simple
+Environment=DISPLAY=:0
+Environment=XAUTHORITY=/home/sunrise/.Xauthority
+WorkingDirectory=/app/rdk-x5-vision
+ExecStart=/app/rdk-x5-vision/scripts/kiosk_session.sh
+Restart=always
+RestartSec=3
+TimeoutStopSec=15
+KillMode=control-group

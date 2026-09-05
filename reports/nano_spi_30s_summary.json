@@ -1,0 +1,26 @@
+{
+  "seconds": 29.5,
+  "models": {
+    "detect": {
+      "file": "yolo26n_detect_bayese_640x640_nv12.bin",
+      "input": "640x640 NV12",
+      "latency_bench_ms": null
+    },
+    "depth": {
+      "file": "yolo26n_depth_bayese_768x768_nv12.bin",
+      "input": "768x768 NV12",
+      "latency_bench_ms": null
+    }
+  },
+  "tracking": false,
+  "rates": {
+    "capture": 29.694915254237287,
+    "detect": 29.694915254237287,
+    "depth": 19.76271186440678,
+    "encoded": 29.694915254237287
+  },
+  "bpu": {
+    "avg": 69.8,
+    "max": 75.0
+  }
+}

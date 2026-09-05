@@ -1,0 +1,16 @@
+{
+  "detection_count_cpp": 5,
+  "detection_count_official": 5,
+  "high_confidence_matching_iou": [
+    0.9999982943791463,
+    0.9999957309182976,
+    0.9999931020047648,
+    0.9999991701560287,
+    0.9999981770068805
+  ],
+  "log_depth_cosine": 0.9998754858970642,
+  "depth_relative_median_error": 0.0,
+  "depth_relative_p95_error": 0.043920278549194336,
+  "note": "Same official models; optimized libyuv bilinear versus official OpenCV preprocessing. This is numerical agreement on one image, not a dataset accuracy claim.",
+  "passed": true
+}
