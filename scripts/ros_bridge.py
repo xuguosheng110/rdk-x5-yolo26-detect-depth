@@ -39,6 +39,7 @@ class Bridge(Node):
         self.rgb_frames=deque(maxlen=16)
         self.targets = None
         self.age_targets = {}
+        self.timing = {}
         self.target_time = 0
         self.ai_updates = 0
         self.frames = 0
@@ -60,7 +61,7 @@ class Bridge(Node):
         atomic('display.jpg', jpg.tobytes())
         atomic('bridge.json', json.dumps({'mode': self.mode, 'frames': self.frames,
             'updated': time.time(), 'fps': self.frames / max(.1, time.monotonic()-self.start),
-            'ages': ages or [], 'ai_updates': self.ai_updates, 'ai_age_s': time.monotonic()-self.target_time}).encode())
+            'timing': {k:v for k,(v,t) in self.timing.items() if time.monotonic()-t<3}, 'ages': ages or [], 'ai_updates': self.ai_updates, 'ai_age_s': time.monotonic()-self.target_time}).encode())
 
     def camera(self, m):
         now = time.monotonic()
@@ -122,10 +123,16 @@ class Bridge(Node):
                                 cv2.line(frame,(int(pa.x),int(pa.y)),(int(pb.x),int(pb.y)),(80,210,255),2)
             self.save(frame[:,160:800], ages)
 
+    def record_infer(self, msg, key):
+        values=[p.time_ms_duration for p in msg.perfs if p.type.endswith("_predict_infer")]
+        if values: self.timing[key]=(sum(values),time.monotonic())
+
     def ai(self, msg):
+        self.record_infer(msg,"body_bpu_ms")
         self.targets=msg; self.target_time=time.monotonic(); self.ai_updates += 1
 
     def age(self, msg):
+        self.record_infer(msg,"age_bpu_ms")
         now=time.monotonic()
         self.age_targets={t.track_id:(now,a.value) for t in msg.targets for a in t.attributes if a.type=='age'}
 
@@ -148,6 +155,8 @@ class Bridge(Node):
                     gray[valid]=np.interp(inverse[valid],knots,[0,64,128,192,255]).astype(np.uint8)
             color=cv2.applyColorMap(gray,cv2.COLORMAP_JET);color[~valid]=0
             stamp=m.header.stamp.sec+m.header.stamp.nanosec*1e-9
+            latency=(time.time()-stamp)*1000
+            if 0<=latency<3000: self.timing["depth_latency_ms"]=(latency,time.monotonic())
             rgb_stamp,rgb=min(self.rgb_frames,key=lambda item:abs(item[0]-stamp))
             if abs(rgb_stamp-stamp)>.5: return
             grid=[]

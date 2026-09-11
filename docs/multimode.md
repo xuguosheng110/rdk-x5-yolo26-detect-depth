@@ -112,3 +112,5 @@ python3 tests/verify_modes.py --url http://127.0.0.1:8080
 原 USB 方案的约 30fps 测量不能用于本次 MIPI → ROS → JPEG 桥接方案，也不是 SPI 物理刷新率。当前优先实现可靠切换和复现；桥接与浏览器轮询存在额外开销。深度绝对精度、年龄准确率和不同模组兼容性没有完成标定测量或数据集评估。
 
 官方参考：[双目采集](https://developer.d-robotics.cc/accessories_stereo_camera_doc/stereo_camera_gs130wi/quick_start)、[StereoNet](https://developer.d-robotics.cc/tros_doc/boxs/spatial/hobot_stereonet?v=3.5.0&p=RDK+X5)、[人体检测](https://github.com/D-Robotics/mono2d_body_detection)、[年龄模型](https://github.com/D-Robotics/face_age_detection)。模型由官方 TROS 包提供，不打包到本仓库。
+
+顶部性能信息使用毫秒：YOLO 显示检测/深度 BPU 平均耗时；人体显示官方结果 perfs 中 predict_infer 耗时，年龄暂无结果时显示 --。StereoNet 未暴露独立 BPU 计时，显示图像时间戳到桥接收到深度的延迟（包含采集、推理和传输），明确标为“深度延迟”。不使用 FPS 倒数冒充 BPU 时间。
