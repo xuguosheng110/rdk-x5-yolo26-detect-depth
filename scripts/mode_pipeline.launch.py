@@ -18,12 +18,12 @@ def generate_launch_description():
             '--source','framefile:/run/rdk-vision/left.jpg','--port','8081','--keep-camera-settings'],cwd=str(ROOT),output='screen'))
     elif mode=='stereo':
         nodes.append(Node(package='hobot_stereonet',executable='stereonet_model_node',name='StereoNetNode',
-            parameters=[{'stereonet_model_file_path':str(PREFIX/'share/hobot_stereonet/config/DStereoV2.4_int16_320_256.bin'),
+            parameters=[{'stereonet_model_file_path':str(PREFIX/'share/hobot_stereonet/config/DStereoV2.4_int16_640_480.bin'),
                 'stereo_image_topic':'/sub_image_combine_raw',
                 'camera_info_topic':'/sub_image_combine_raw/right/camera_info',
                 'left_camera_info_topic':'/sub_image_combine_raw/left/camera_info',
                 'render_type':'outdoor',
-                'save_result_flag':False,'publish_pcd_enabled':False,'publish_visual_enabled':True,'render_perf':False}],
+                'save_result_flag':False,'publish_pcd_enabled':False,'publish_visual_enabled':False,'render_perf':False}],
             arguments=['--ros-args','--log-level','warn'],output='screen'))
     elif mode=='body':
         nodes.append(Node(package='mono2d_body_detection',executable='mono2d_body_detection',

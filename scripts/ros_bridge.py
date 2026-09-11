@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """ROS images/results to atomic latest-frame files; no camera ownership."""
-import argparse, array, json, os, time
+import argparse, array, json, os, time, struct
+from collections import deque
 from pathlib import Path
 import cv2
 import numpy as np
@@ -35,6 +36,7 @@ class Bridge(Node):
         self.auto = mode == "auto"
         self.config = Path(__file__).resolve().parents[1]/"config/selected-mode.env"
         self.left = None
+        self.rgb_frames=deque(maxlen=16)
         self.targets = None
         self.age_targets = {}
         self.target_time = 0
@@ -45,7 +47,7 @@ class Bridge(Node):
         self.pub = self.create_publisher(Image, '/rdk/image_raw', 10)
         self.create_subscription(Image, '/image_left_raw', self.camera, qos_profile_sensor_data)
         if mode in ('stereo','auto'):
-            self.create_subscription(Image, '/StereoNetNode/stereonet_visual', self.stereo, qos_profile_sensor_data)
+            self.create_subscription(Image, '/StereoNetNode/stereonet_depth', self.stereo, qos_profile_sensor_data)
         if mode in ('body','auto'):
             self.create_subscription(PerceptionTargets, '/hobot_mono2d_body_detection', self.ai, 10)
             self.create_subscription(PerceptionTargets, '/hobot_face_age_detection', self.age, 10)
@@ -70,7 +72,13 @@ class Bridge(Node):
                 self.targets=None; self.age_targets={}; self.ai_updates=0; self.target_time=0
         if now - self.last < 1/15: return
         self.last = now
-        try: frame = cv2.resize(decode(m), (640,544))
+        try:
+            full=decode(m)
+            if self.mode=="stereo":
+                self.rgb_frames.append((m.header.stamp.sec+m.header.stamp.nanosec*1e-9,full))
+                atomic('camera.json', json.dumps({'updated':time.time(),'width':m.width,'height':m.height}).encode())
+                return
+            frame = cv2.resize(full, (640,544))
         except (ValueError, cv2.error) as e:
             self.get_logger().error(str(e)); return
         self.left = frame
@@ -122,8 +130,42 @@ class Bridge(Node):
         self.age_targets={t.track_id:(now,a.value) for t in msg.targets for a in t.attributes if a.type=='age'}
 
     def stereo(self,m):
-        if self.mode!='stereo': return
-        try: self.save(decode(m))
+        if self.mode!='stereo' or not self.rgb_frames: return
+        try:
+            endian='>' if m.is_bigendian else '<'
+            if m.encoding in ('mono16','16UC1'):
+                depth=np.frombuffer(m.data,dtype=endian+'u2').reshape(m.height,m.step//2)[:,:m.width].astype(np.float32)*.001
+            elif m.encoding=='32FC1':
+                depth=np.frombuffer(m.data,dtype=endian+'f4').reshape(m.height,m.step//4)[:,:m.width]
+            else: raise ValueError('Unsupported depth encoding: '+m.encoding)
+            valid=np.isfinite(depth)&(depth>0)
+            # Rank inverse depth like the official adaptive disparity palette.
+            inverse=np.zeros_like(depth);np.divide(1.,depth,out=inverse,where=valid)
+            gray=np.zeros(depth.shape,np.uint8)
+            if np.count_nonzero(valid)>1:
+                knots=np.percentile(inverse[valid],[0,10,50,90,100])
+                if knots[-1]-knots[0]>1e-6:
+                    gray[valid]=np.interp(inverse[valid],knots,[0,64,128,192,255]).astype(np.uint8)
+            color=cv2.applyColorMap(gray,cv2.COLORMAP_JET);color[~valid]=0
+            stamp=m.header.stamp.sec+m.header.stamp.nanosec*1e-9
+            rgb_stamp,rgb=min(self.rgb_frames,key=lambda item:abs(item[0]-stamp))
+            if abs(rgb_stamp-stamp)>.5: return
+            grid=[]
+            for row in range(3):
+                for col in range(4):
+                    x,y=(col+.5)/4,(row+.5)/3
+                    value=float(depth[min(m.height-1,int(y*m.height)),min(m.width-1,int(x*m.width))])
+                    grid.append({'x':x,'y':y,'meters':round(value,2) if np.isfinite(value) and value>0 else None})
+            meta={'rgb_width':rgb.shape[1],'rgb_height':rgb.shape[0],
+                  'depth_width':m.width,'depth_height':m.height,'grid':grid,
+                  'stamp':stamp,'rgb_delta_ms':round(abs(rgb_stamp-stamp)*1000,1)}
+            ok1,j1=cv2.imencode('.jpg',rgb,[cv2.IMWRITE_JPEG_QUALITY,92])
+            ok2,j2=cv2.imencode('.jpg',color,[cv2.IMWRITE_JPEG_QUALITY,92])
+            if not(ok1 and ok2): return
+            header=json.dumps(meta).encode();rgb_bytes=j1.tobytes()
+            atomic('stereo.frame',struct.pack('<II',len(header),len(rgb_bytes))+header+rgb_bytes+j2.tobytes())
+            # Keep the existing snapshot API compatible; interactive clients use the HD bundle.
+            self.save(np.vstack((cv2.resize(rgb,(m.width,m.height)),color)))
         except (ValueError,cv2.error) as e: self.get_logger().error(str(e))
 
 if __name__=='__main__':

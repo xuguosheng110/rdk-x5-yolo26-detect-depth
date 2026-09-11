@@ -41,7 +41,7 @@ def switch(mode):
     def work():
         try:
             subprocess.run(['systemctl','stop','rdk-x5-mode'],check=True,timeout=20)
-            for f in ('display.jpg','bridge.json'):(RUN/f).unlink(missing_ok=True)
+            for f in ('display.jpg','bridge.json','stereo.frame'):(RUN/f).unlink(missing_ok=True)
             config=ROOT/'config/selected-mode.env'
             tmp=config.with_suffix('.tmp'); tmp.write_text('RDK_MODE='+mode+'\n'); os.replace(tmp,config)
             state.update(mode=mode,generation=time.time_ns())
@@ -61,6 +61,9 @@ class Handler(BaseHTTPRequestHandler):
         try:
             if path in ('/api/status','/stats.json'):return self.reply(200,status())
             if path=='/':return self.reply(200,(ROOT/'web/modes.html').read_bytes().replace(b'__UI_REVISION__',ui_revision().encode()),'text/html; charset=utf-8')
+            if path=='/stereo.frame':
+                if state['phase']=='switching' or state['mode']!='stereo':return self.reply(503,{'error':'switching'})
+                return self.reply(200,(RUN/'stereo.frame').read_bytes(),'application/octet-stream')
             if path=='/frame.jpg':
                 if state['phase']=='switching':return self.reply(503,{'error':'switching'})
                 if state['mode']=='yolo':
