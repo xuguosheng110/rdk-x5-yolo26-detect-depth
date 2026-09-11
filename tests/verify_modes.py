@@ -28,7 +28,7 @@ for mode in ['stereo','body','yolo','stereo','body','yolo']:
   meta_size,rgb_size=struct.unpack('<II',bundle[:8]);offset=8+meta_size
   meta=json.loads(bundle[8:offset])
   assert (meta['rgb_width'],meta['rgb_height'])==(1280,1088)
-  assert (meta['depth_width'],meta['depth_height'])==(640,480)
+  assert (meta['depth_width'],meta['depth_height'])==(320,256)
   assert bundle[offset:offset+2]==b'\xff\xd8' and bundle[offset+rgb_size:offset+rgb_size+2]==b'\xff\xd8'
   assert len(meta['grid'])==12 and meta['rgb_delta_ms']<=500
   assert all(c['meters'] is None or math.isfinite(c['meters']) and c['meters']>0 for c in meta['grid'])

@@ -18,7 +18,7 @@ def generate_launch_description():
             '--source','framefile:/run/rdk-vision/left.jpg','--port','8081','--keep-camera-settings'],cwd=str(ROOT),output='screen'))
     elif mode=='stereo':
         nodes.append(Node(package='hobot_stereonet',executable='stereonet_model_node',name='StereoNetNode',
-            parameters=[{'stereonet_model_file_path':str(PREFIX/'share/hobot_stereonet/config/DStereoV2.4_int16_640_480.bin'),
+            parameters=[{'stereonet_model_file_path':str(PREFIX/'share/hobot_stereonet/config/DStereoV2.4_int16_320_256.bin'),
                 'stereo_image_topic':'/sub_image_combine_raw',
                 'camera_info_topic':'/sub_image_combine_raw/right/camera_info',
                 'left_camera_info_topic':'/sub_image_combine_raw/left/camera_info',

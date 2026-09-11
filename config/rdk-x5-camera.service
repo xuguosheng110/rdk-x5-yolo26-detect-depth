@@ -5,7 +5,7 @@ StartLimitIntervalSec=0
 [Service]
 Environment=ROS_LOG_DIR=/app/rdk-x5-vision/output/roslog
 WorkingDirectory=/app/rdk-x5-vision
-ExecStart=/bin/bash -c 'source /opt/tros/humble/setup.bash; exec ros2 launch mipi_cam mipi_cam_dual_channel.launch.py mipi_image_width:=1280 mipi_image_height:=1088 mipi_channel:=0 mipi_channel2:=2 mipi_rotation:=0.0 mipi_cal_rotation:=0.0 mipi_lpwm_enable:=True mipi_frame_ts_type:=realtime mipi_image_framerate:=15.0 mipi_sub_stream_enable:=True mipi_sub_image_width:=640 mipi_sub_image_height:=480 mipi_image_subframerate:=15.0'
+ExecStart=/bin/bash -c 'source /opt/tros/humble/setup.bash; exec ros2 launch mipi_cam mipi_cam_dual_channel.launch.py mipi_image_width:=1280 mipi_image_height:=1088 mipi_channel:=0 mipi_channel2:=2 mipi_rotation:=0.0 mipi_cal_rotation:=0.0 mipi_lpwm_enable:=True mipi_frame_ts_type:=realtime mipi_image_framerate:=15.0 mipi_sub_stream_enable:=True mipi_sub_image_width:=320 mipi_sub_image_height:=256 mipi_image_subframerate:=15.0'
 Restart=always
 RestartSec=5
 TimeoutStopSec=10
