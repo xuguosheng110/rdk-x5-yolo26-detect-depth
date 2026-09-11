@@ -124,7 +124,7 @@ class Bridge(Node):
             self.save(frame[:,160:800], ages)
 
     def record_infer(self, msg, key):
-        values=[p.time_ms_duration for p in msg.perfs if p.type.endswith("_predict_infer")]
+        values=[p.time_ms_duration for p in msg.perfs if p.type.endswith("_predict_infer") and (key!="age_bpu_ms" or p.type=="faceAge_predict_infer")]
         if values: self.timing[key]=(sum(values),time.monotonic())
 
     def ai(self, msg):
