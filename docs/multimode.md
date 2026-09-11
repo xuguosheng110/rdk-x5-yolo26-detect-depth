@@ -114,3 +114,5 @@ python3 tests/verify_modes.py --url http://127.0.0.1:8080
 官方参考：[双目采集](https://developer.d-robotics.cc/accessories_stereo_camera_doc/stereo_camera_gs130wi/quick_start)、[StereoNet](https://developer.d-robotics.cc/tros_doc/boxs/spatial/hobot_stereonet?v=3.5.0&p=RDK+X5)、[人体检测](https://github.com/D-Robotics/mono2d_body_detection)、[年龄模型](https://github.com/D-Robotics/face_age_detection)。模型由官方 TROS 包提供，不打包到本仓库。
 
 顶部性能信息使用毫秒：YOLO 显示检测/深度 BPU 平均耗时；人体显示官方结果 perfs 中 predict_infer 耗时，年龄暂无结果时显示 --。StereoNet 未暴露独立 BPU 计时，显示图像时间戳到桥接收到深度的延迟（包含采集、推理和传输），明确标为“深度延迟”。不使用 FPS 倒数冒充 BPU 时间。
+
+页面顶部“重启程序”按钮调用 POST /api/restart，保留当前算法模式，依次重启算法、相机采集和图像桥接服务。重启期间禁止重复操作，与模式切换共用互斥锁；页面自动等待新帧恢复，无需手动刷新。不重启操作系统或网页服务。接口采用与模式切换相同的同源及 JSON 校验。

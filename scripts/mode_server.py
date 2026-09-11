@@ -35,12 +35,16 @@ def status():
         s['phase']='ready' if ready else 'waiting'
     return s
 
-def switch(mode):
+def switch(mode, restart=False):
     if not lock.acquire(blocking=False):return False
-    state.update(phase='switching',error='')
+    state.update(phase='switching',error='',action='restart' if restart else 'switch')
     def work():
         try:
             subprocess.run(['systemctl','stop','rdk-x5-mode'],check=True,timeout=20)
+            if restart:
+                subprocess.run(['systemctl','stop','rdk-x5-bridge'],check=True,timeout=20)
+                subprocess.run(['systemctl','restart','rdk-x5-camera'],check=True,timeout=30)
+                subprocess.run(['systemctl','start','rdk-x5-bridge'],check=True,timeout=20)
             for f in ('display.jpg','bridge.json','stereo.frame'):(RUN/f).unlink(missing_ok=True)
             config=ROOT/'config/selected-mode.env'
             tmp=config.with_suffix('.tmp'); tmp.write_text('RDK_MODE='+mode+'\n'); os.replace(tmp,config)
@@ -73,7 +77,7 @@ class Handler(BaseHTTPRequestHandler):
             return self.reply(404,{'error':'not found'})
         except (OSError,ValueError):self.reply(503,{'error':'waiting for live frame'})
     def do_POST(self):
-        if self.path!='/api/mode':return self.reply(404,{'error':'not found'})
+        if self.path not in ('/api/mode','/api/restart'):return self.reply(404,{'error':'not found'})
         # Reject browser requests from another origin and non-JSON form submissions.
         origin=self.headers.get('Origin')
         if origin and urlsplit(origin).netloc!=self.headers.get('Host'):return self.reply(403,{'error':'origin'})
@@ -81,10 +85,12 @@ class Handler(BaseHTTPRequestHandler):
         try:
             size=int(self.headers.get('Content-Length','0'))
             if not 0<size<=256:raise ValueError()
-            mode=json.loads(self.rfile.read(size)).get('mode')
+            payload=json.loads(self.rfile.read(size))
+            if not isinstance(payload,dict):raise ValueError()
+            mode=state['mode'] if self.path=='/api/restart' else payload.get('mode')
             if mode not in MODES:raise ValueError()
         except (ValueError,TypeError,AttributeError):return self.reply(400,{'error':'invalid mode'})
-        if not switch(mode):return self.reply(409,{'error':'switch in progress'})
+        if not switch(mode,restart=self.path=='/api/restart'):return self.reply(409,{'error':'switch in progress'})
         self.reply(202,{'mode':mode})
 
 if __name__=='__main__':
