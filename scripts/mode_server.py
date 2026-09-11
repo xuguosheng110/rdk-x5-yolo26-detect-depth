@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """LAN/touch portal. One serialized systemd workload, persistent selected mode."""
-import json, os, subprocess, threading, time, urllib.request
+import hashlib, json, os, subprocess, threading, time, urllib.request
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import urlsplit
@@ -14,8 +14,11 @@ def read_json(p):
     try:return json.loads(p.read_text())
     except (OSError,ValueError):return {}
 
+def ui_revision():
+    return hashlib.sha256((ROOT/"web/modes.html").read_bytes()).hexdigest()[:12]
+
 def status():
-    s=dict(state); camera=read_json(RUN/'camera.json')
+    s=dict(state); s['ui_revision']=ui_revision(); camera=read_json(RUN/'camera.json')
     s['camera_ready']=time.time()-camera.get('updated',0)<3
     s['labels']=MODES
     if s['mode']=='yolo':
@@ -57,7 +60,7 @@ class Handler(BaseHTTPRequestHandler):
         path=urlsplit(self.path).path
         try:
             if path in ('/api/status','/stats.json'):return self.reply(200,status())
-            if path=='/':return self.reply(200,(ROOT/'web/modes.html').read_bytes(),'text/html; charset=utf-8')
+            if path=='/':return self.reply(200,(ROOT/'web/modes.html').read_bytes().replace(b'__UI_REVISION__',ui_revision().encode()),'text/html; charset=utf-8')
             if path=='/frame.jpg':
                 if state['phase']=='switching':return self.reply(503,{'error':'switching'})
                 if state['mode']=='yolo':

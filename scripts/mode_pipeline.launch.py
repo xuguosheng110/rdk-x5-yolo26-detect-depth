@@ -22,6 +22,7 @@ def generate_launch_description():
                 'stereo_image_topic':'/sub_image_combine_raw',
                 'camera_info_topic':'/sub_image_combine_raw/right/camera_info',
                 'left_camera_info_topic':'/sub_image_combine_raw/left/camera_info',
+                'render_type':'outdoor',
                 'save_result_flag':False,'publish_pcd_enabled':False,'publish_visual_enabled':True,'render_perf':False}],
             arguments=['--ros-args','--log-level','warn'],output='screen'))
     elif mode=='body':
