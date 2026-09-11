@@ -1,0 +1,15 @@
+[Unit]
+Description=RDK X5 selected vision algorithm
+After=rdk-x5-camera.service
+StartLimitIntervalSec=0
+[Service]
+Environment=ROS_LOG_DIR=/app/rdk-x5-vision/output/roslog
+WorkingDirectory=/app/rdk-x5-vision
+EnvironmentFile=/app/rdk-x5-vision/config/selected-mode.env
+ExecStart=/bin/bash -c 'source /opt/tros/humble/setup.bash; exec ros2 launch /app/rdk-x5-vision/scripts/mode_pipeline.launch.py'
+Restart=always
+RestartSec=3
+TimeoutStopSec=8
+KillMode=control-group
+[Install]
+WantedBy=multi-user.target

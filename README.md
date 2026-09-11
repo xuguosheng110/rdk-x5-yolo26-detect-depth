@@ -1,5 +1,14 @@
 # RDK X5 · YOLO26 检测 + 单目深度 + SPI 展会演示
 
+## 新增：GS130WI 三模式触屏演示
+
+支持同一双目模组切换 **YOLO 检测 + 单目深度 / 双目深度 / 人体 + 年龄估计**。SPI 触屏与局域网浏览器共享模式，切换后自动加载新画面，支持开机全屏与上次模式恢复。
+
+**[三模式安装、使用与排障](docs/multimode.md)** · [验收记录](reports/multimode-validation.md)
+
+原有 USB 双模型的说明与测量保留在下文。三模式的 ROS 图像桥接路径不同，不沿用原 USB 帧率结论。
+
+
 在 **RDK X5** 上并行运行 YOLO26 目标检测和单目深度估计，输出实时 Web 面板，并在 **480×320 SPI 屏**上全屏展示。支持开机自动登录、自动运行、屏幕常亮和进程异常恢复。
 
 本项目移植自 [Max.Ma 的 RDK S100P 双模型演示](https://github.com/maxma615/yolo26-detect-depth-demo)，参考[地瓜机器人论坛案例](https://forum.d-robotics.cc/t/topic/35680)，模型与解码采用 [D-Robotics 官方 X5 Model Zoo](https://github.com/D-Robotics/rdk_model_zoo/tree/rdk_x5)。**仓库根目录是 X5 实现；[references/s100p](references/s100p) 是带原许可证的 S100P 原始源码快照。**

@@ -1,0 +1,13 @@
+[Unit]
+Description=RDK X5 touch and LAN mode portal
+After=network.target
+StartLimitIntervalSec=0
+[Service]
+WorkingDirectory=/app/rdk-x5-vision
+RuntimeDirectory=rdk-vision
+RuntimeDirectoryPreserve=yes
+ExecStart=/usr/bin/python3 /app/rdk-x5-vision/scripts/mode_server.py
+Restart=always
+RestartSec=2
+[Install]
+WantedBy=multi-user.target

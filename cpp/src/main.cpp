@@ -1691,12 +1691,18 @@ int main(int argc, char** argv) {
 
   // ---- camera / video mode ------------------------------------------------
   cv::VideoCapture cap;
+  const bool file_feed = args.source.rfind("framefile:", 0) == 0;
+  const std::string frame_path = file_feed ? args.source.substr(10) : "";
+  std::string last_frame_bytes;
+  auto last_input = NOW();
   // Any pure-numeric source is a V4L2 camera index (0,1,2,3,...).
   const bool is_cam_idx = !args.source.empty() &&
       std::all_of(args.source.begin(), args.source.end(),
                   [](unsigned char c) { return std::isdigit(c); });
   const bool is_camera=is_cam_idx || args.source.rfind("/dev/video",0)==0;
-  if (is_camera) {
+  if (file_feed) {
+    // Atomic latest-JPEG handoff from the ROS camera bridge.
+  } else if (is_camera) {
     // boot-race safety: the USB camera may enumerate seconds after the
     // service starts — retry instead of failing
     for (int attempt = 1; attempt <= 10; ++attempt) {
@@ -1717,7 +1723,7 @@ int main(int argc, char** argv) {
   } else {
     cap.open(args.source);
   }
-  if (!cap.isOpened()) {
+  if (!file_feed && !cap.isOpened()) {
     std::fprintf(stderr, "[FATAL] cannot open source %s\n",
                  args.source.c_str());
     return 1;
@@ -2233,7 +2239,19 @@ int main(int argc, char** argv) {
   uint64_t cap_frames = 0;
   while (!g_stop.load()) {
     cv::Mat frame;
-    if (!cap.read(frame) || frame.empty()) {
+    if (file_feed) {
+      std::ifstream input(frame_path, std::ios::binary);
+      std::string bytes((std::istreambuf_iterator<char>(input)), std::istreambuf_iterator<char>());
+      if (bytes.empty() || bytes == last_frame_bytes) {
+        if (ms_since(last_input) > 10000) { std::fprintf(stderr, "[camera] framefile timeout\n"); break; }
+        std::this_thread::sleep_for(std::chrono::milliseconds(10));
+        continue;
+      }
+      last_frame_bytes = bytes;
+      frame = cv::imdecode(std::vector<unsigned char>(bytes.begin(), bytes.end()), cv::IMREAD_COLOR);
+      last_input = NOW();
+    } else if (!cap.read(frame)) { break; }
+    if (frame.empty()) {
       std::printf("[camera] stream ended\n");
       break;
     }

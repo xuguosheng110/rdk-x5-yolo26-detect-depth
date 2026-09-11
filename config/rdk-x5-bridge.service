@@ -1,0 +1,13 @@
+[Unit]
+Description=Persistent RDK camera and detection display bridge
+After=rdk-x5-camera.service
+StartLimitIntervalSec=0
+[Service]
+Environment=ROS_LOG_DIR=/app/rdk-x5-vision/output/roslog
+WorkingDirectory=/app/rdk-x5-vision
+ExecStart=/bin/bash -c 'source /opt/tros/humble/setup.bash; exec python3 /app/rdk-x5-vision/scripts/ros_bridge.py --mode auto'
+Restart=always
+RestartSec=3
+TimeoutStopSec=5
+[Install]
+WantedBy=multi-user.target
