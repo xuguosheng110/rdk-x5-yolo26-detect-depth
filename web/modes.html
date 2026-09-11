@@ -11,7 +11,7 @@ async function poll(){try{let r=await fetch('/api/status',{cache:'no-store'});if
 function drawStereo(rgb,depth,meta){
  canvas.width=rgb.width*2;canvas.height=rgb.height;
  ctx.imageSmoothingEnabled=true;ctx.imageSmoothingQuality='high';
- ctx.drawImage(rgb,0,0,rgb.width,rgb.height);ctx.imageSmoothingEnabled=false;ctx.drawImage(depth,rgb.width,0,rgb.width,rgb.height);ctx.imageSmoothingEnabled=true;
+ ctx.drawImage(rgb,0,0,rgb.width,rgb.height);ctx.drawImage(depth,rgb.width,0,rgb.width,rgb.height);
  const small=innerHeight<400,font=small?55:30;ctx.font=`600 ${font}px system-ui`;ctx.textBaseline='top';
  function label(text,x,y){const width=ctx.measureText(text).width;ctx.fillStyle='#071018c9';ctx.fillRect(x-5,y-3,width+10,font+12);ctx.fillStyle='white';ctx.fillText(text,x,y);}
  label(`原图 ${meta.rgb_width}×${meta.rgb_height}`,18,15);label(`深度 ${meta.depth_width}×${meta.depth_height}`,rgb.width+18,15);
