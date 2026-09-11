@@ -11,12 +11,12 @@ async function poll(){try{let r=await fetch('/api/status',{cache:'no-store'});if
 function drawStereo(rgb,depth,meta){
  canvas.width=rgb.width*2;canvas.height=rgb.height;
  ctx.imageSmoothingEnabled=true;ctx.imageSmoothingQuality='high';
- ctx.drawImage(rgb,0,0,rgb.width,rgb.height);ctx.drawImage(depth,rgb.width,0,rgb.width,rgb.height);
+ ctx.drawImage(rgb,0,0,rgb.width,rgb.height);ctx.imageSmoothingEnabled=false;ctx.drawImage(depth,rgb.width,0,rgb.width,rgb.height);ctx.imageSmoothingEnabled=true;
  const small=innerHeight<400,font=small?55:30;ctx.font=`600 ${font}px system-ui`;ctx.textBaseline='top';
  function label(text,x,y){const width=ctx.measureText(text).width;ctx.fillStyle='#071018c9';ctx.fillRect(x-5,y-3,width+10,font+12);ctx.fillStyle='white';ctx.fillText(text,x,y);}
  label(`原图 ${meta.rgb_width}×${meta.rgb_height}`,18,15);label(`深度 ${meta.depth_width}×${meta.depth_height}`,rgb.width+18,15);
- if(!small){ctx.strokeStyle='#ffffff55';ctx.lineWidth=1;for(let x=1;x<4;x++){ctx.beginPath();ctx.moveTo(rgb.width+x*rgb.width/4,0);ctx.lineTo(rgb.width+x*rgb.width/4,rgb.height);ctx.stroke();}for(let y=1;y<3;y++){ctx.beginPath();ctx.moveTo(rgb.width,y*rgb.height/3);ctx.lineTo(canvas.width,y*rgb.height/3);ctx.stroke();}}
- for(const cell of meta.grid){if(small&&(cell.x<.3||cell.x>.7))continue;label(cell.meters===null?'无效':cell.meters.toFixed(2)+' m',rgb.width+cell.x*rgb.width-font,cell.y*rgb.height);}
+ if(!small){ctx.strokeStyle='#ffffff55';ctx.lineWidth=1;for(const offset of [0,rgb.width]){for(let x=1;x<4;x++){ctx.beginPath();ctx.moveTo(offset+x*rgb.width/4,0);ctx.lineTo(offset+x*rgb.width/4,rgb.height);ctx.stroke();}for(let y=1;y<3;y++){ctx.beginPath();ctx.moveTo(offset,y*rgb.height/3);ctx.lineTo(offset+rgb.width,y*rgb.height/3);ctx.stroke();}}}
+ for(const cell of meta.grid){if(small&&(cell.x<.3||cell.x>.7))continue;const text=cell.meters===null?'无效':cell.meters.toFixed(2)+' m';label(text,cell.x*rgb.width-font,cell.y*rgb.height);label(text,rgb.width+cell.x*rgb.width-font,cell.y*rgb.height);}
 }
 async function frame(){if(ready){const gen=generation,m=mode;try{
  if(m==='stereo'){
